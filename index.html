@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OProducts Security Auditor</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050505; --surface: #0f0f13; --border: #27272a;
+  --text: #f4f4f5; --muted: #a1a1aa; --accent: #10b981; --red: #ef4444; --yellow: #f59e0b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+
+nav { border-bottom: 1px solid var(--border); padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; }
+.brand { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+.brand span { color: var(--accent); }
+
+.hero { padding: 80px 5% 40px; text-align: center; max-width: 800px; margin: 0 auto; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+.hero h1 span { background: linear-gradient(90deg, #10b981, #3b82f6); -webkit-background-clip: text; color: transparent; }
+.hero p { color: var(--muted); font-size: 1.1rem; margin-bottom: 32px; }
+
+.scan-box { display: flex; gap: 12px; background: var(--surface); padding: 8px; border-radius: 12px; border: 1px solid var(--border); max-width: 600px; margin: 0 auto; transition: border-color 0.2s; }
+.scan-box:focus-within { border-color: var(--accent); box-shadow: 0 0 20px rgba(16, 185, 129, 0.1); }
+.scan-box input { flex: 1; background: transparent; border: none; color: #fff; padding: 12px 16px; font-size: 1rem; outline: none; font-family: 'JetBrains Mono', monospace; }
+.scan-box button { background: var(--accent); color: #000; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+.scan-box button:hover { background: #34d399; }
+
+.terminal { background: #000; border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: 800px; margin: 40px auto; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; display: none; flex-direction: column; gap: 8px; text-align: left; }
+.terminal.active { display: flex; }
+.term-line { color: var(--muted); opacity: 0; transition: opacity 0.3s; }
+.term-line.visible { opacity: 1; }
+.term-line.success { color: var(--accent); }
+.term-line.warning { color: var(--yellow); }
+
+.results { display: none; max-width: 800px; margin: 0 auto 80px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+.results.active { display: block; animation: fadeIn 0.5s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.score-circle { width: 120px; height: 120px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 24px; border: 4px solid var(--red); background: rgba(239, 68, 68, 0.05); }
+.score-circle h2 { font-size: 2.5rem; margin: 0; color: var(--red); }
+.score-circle p { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 0; }
+
+.issue-list { display: flex; flex-direction: column; gap: 16px; margin-top: 32px; }
+.issue { background: #18181b; border-left: 4px solid var(--red); padding: 20px; border-radius: 8px; }
+.issue.warning { border-left-color: var(--yellow); }
+.issue h4 { font-size: 1.1rem; margin-bottom: 8px; color: var(--red); }
+.issue.warning h4 { color: var(--yellow); }
+.issue p { font-size: 0.9rem; color: var(--muted); margin-bottom: 12px; }
+.issue .solution { background: #000; padding: 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent); border: 1px solid var(--border); overflow-x: auto; white-space: pre-wrap; }
+
+footer { margin-top: auto; padding: 24px; text-align: center; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><span>O</span>Products Security</div>
+</nav>
+
+<div class="hero">
+  <h1>Find vulnerabilities before <span>hackers do.</span></h1>
+  <p>Enter your website URL to run an AI-powered security audit. We check headers, exposed data, and outdated tech.</p>
+  
+  <div class="scan-box">
+    <input type="url" id="urlInput" placeholder="https://your-website.com" required>
+    <button id="scanBtn">Scan Site</button>
+  </div>
+</div>
+
+<div class="terminal" id="terminal">
+  <div class="term-line" id="line1">> Initializing OProducts AI Security Engine...</div>
+  <div class="term-line" id="line2">> Resolving DNS for <span id="targetUrl"></span>...</div>
+  <div class="term-line" id="line3">> Fetching HTTP headers and DOM structure...</div>
+  <div class="term-line" id="line4">> Analyzing for exposed API keys, missing CSP, and XSS vectors...</div>
+  <div class="term-line" id="line5">> Generating remediation report...</div>
+</div>
+
+<div class="results" id="results">
+  <div class="score-circle" id="scoreCircle">
+    <h2 id="scoreVal">--</h2>
+    <p>Risk Score</p>
+  </div>
+  <h3 style="text-align:center; margin-bottom: 8px;">Vulnerabilities Found</h3>
+  <p style="text-align:center; color:var(--muted); font-size:0.9rem; margin-bottom: 24px;">The following issues were detected on your website.</p>
+  <div class="issue-list" id="issueList"></div>
+</div>
+
+<footer>
+  &copy; 2026 OProducts Security. For authorized testing only.
+</footer>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbw0VC3rGc5lpoSuwMCx7izlbJ6SQ8mEI8AEj-x-6JzHwnfO5Pfsu8tBXRRfHrrmT3ts8w/exec';
+
+  document.getElementById('scanBtn').addEventListener('click', async function() {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) { alert('Please enter a valid URL'); return; }
+
+    const btn = this;
+    btn.innerText = 'Scanning...';
+    btn.disabled = true;
+
+    // Reset UI
+    document.getElementById('results').classList.remove('active');
+    document.getElementById('terminal').classList.add('active');
+    document.getElementById('targetUrl').innerText = url;
+    
+    const lines = [1, 2, 3, 4, 5];
+    lines.forEach(i => {
+      document.getElementById('line' + i).classList.remove('visible', 'success', 'warning');
+    });
+
+    // Animate terminal
+    lines.forEach((line, index) => {
+      setTimeout(() => {
+        const el = document.getElementById('line' + line);
+        el.classList.add('visible');
+        if (line === 3) el.classList.add('success');
+        if (line === 5) el.classList.add('warning');
+      }, index * 600); 
+    });
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' }, 
+        body: JSON.stringify({ url: url })
+      });
+      
+      const data = await res.json();
+      
+      // Wait for animation to finish before showing results
+      setTimeout(() => {
+        btn.innerText = 'Scan Site';
+        btn.disabled = false;
+        
+        if (data.error) {
+          alert('Backend Error: ' + data.error);
+          return;
+        }
+
+        renderResults(data);
+      }, 3500);
+
+    } catch (err) {
+      btn.innerText = 'Scan Site';
+      btn.disabled = false;
+      alert('Network Error: ' + err.message);
+    }
+  });
+
+  function renderResults(issues) {
+    const resultsDiv = document.getElementById('results');
+    const listDiv = document.getElementById('issueList');
+    const scoreVal = document.getElementById('scoreVal');
+    const scoreCircle = document.getElementById('scoreCircle');
+    
+    listDiv.innerHTML = '';
+    let score = 100;
+
+    if (!Array.isArray(issues) || issues.length === 0) {
+      listDiv.innerHTML = '<p style="text-align:center; color:var(--accent); font-weight:bold;">No major vulnerabilities found! Your site looks secure.</p>';
+    } else {
+      issues.forEach(issue => {
+        if (issue.severity === 'High') score -= 30;
+        else if (issue.severity === 'Medium') score -= 15;
+        else score -= 5;
+
+        const div = document.createElement('div');
+        div.className = `issue ${issue.severity === 'Medium' ? 'warning' : ''}`;
+        div.innerHTML = `
+          <h4>[${issue.severity || 'Medium'}] ${issue.title}</h4>
+          <p>${issue.description}</p>
+          <div class="solution">${issue.solution.replace(/\n/g, '<br>')}</div>
+        `;
+        listDiv.appendChild(div);
+      });
+    }
+
+    if (score < 0) score = 0;
+    scoreVal.innerText = score;
+    scoreCircle.style.borderColor = score >= 80 ? 'var(--accent)' : score >= 50 ? 'var(--yellow)' : 'var(--red)';
+    scoreVal.style.color = score >= 80 ? 'var(--accent)' : score >= 50 ? 'var(--yellow)' : 'var(--red)';
+
+    resultsDiv.classList.add('active');
+    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+</script>
+</body>
+</html>
