@@ -68,6 +68,13 @@ footer { margin-top: auto; padding: 24px; text-align: center; color: var(--muted
   <h1>Find vulnerabilities before <span>hackers do.</span></h1>
   <p>Enter your website URL to run an AI-powered security audit. We check headers, exposed data, and outdated tech.</p>
   
+  
+  <div style="display:flex; align-items:flex-start; gap:8px; max-width:600px; margin: 0 auto 20px; text-align:left; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+    <input type="checkbox" id="authCheck" style="margin-top: 4px; accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer;">
+    <label for="authCheck" style="font-size: 0.85rem; color: var(--muted); cursor: pointer; line-height: 1.4;">
+      I confirm that I am the owner of this website, or I have explicit written permission from the owner to perform this security scan.
+    </label>
+  </div>
   <div class="scan-box">
     <input type="url" id="urlInput" placeholder="https://your-website.com" required>
     <button id="scanBtn">Scan Site</button>
@@ -102,7 +109,13 @@ footer { margin-top: auto; padding: 24px; text-align: center; color: var(--muted
 
   document.getElementById('scanBtn').addEventListener('click', async function() {
     const url = document.getElementById('urlInput').value.trim();
+    const authCheck = document.getElementById('authCheck');
+    
     if (!url) { alert('Please enter a valid URL'); return; }
+    if (!authCheck.checked) { 
+      alert('LEGAL NOTICE: You must confirm you have authorization to scan this website.'); 
+      return; 
+    }
 
     const btn = this;
     btn.innerText = 'Scanning...';
